@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Atrone LoudMic Phone EQ</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ff0055" />
+  <style>
+    body { background: #0f0f0f; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; text-align: center; color: #ffffff; }
+    h1 { color: #ff0055; animation: fadeInDown 1s ease; }
+    .mic-status { font-size: 18px; margin: 10px; color: #cccccc; animation: fadeIn 1.2s ease; }
+    .button { background: linear-gradient(135deg, #ff0055, #ff3377); border: none; color: white; padding: 15px 30px; margin: 10px;
+              border-radius: 10px; font-size: 18px; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 0 10px #ff0055aa; }
+    .button:hover { transform: scale(1.05); }
+    .adv-button { background-color: #222; color: #fff; padding: 10px 20px; border-radius: 8px; margin-top: 10px; border: 1px solid #444; }
+    .tips, .instructions { background-color: #1a1a1a; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: left;
+                           box-shadow: 0 4px 8px rgba(255,0,85,0.1); max-width: 500px; margin-left: auto; margin-right: auto; animation: fadeInUp 1s ease; }
+    ul { padding-left: 20px; }
+    .gain-slider { margin: 20px; }
+    input[type=range] { width: 80%; accent-color: #ff0055; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <h1>Atrone's Loudmic Phone EQ</h1>
+  <p class="mic-status" id="micStatus">🎤 Microphone Inactive</p>
+  <button class="button" id="startBtn" onclick="startLoudMic()">ATRONE'S LOUDMIC (500DB)</button>
+  <button class="button" id="stopBtn" onclick="stopLoudMic()" style="display:none;background:linear-gradient(135deg,#222,#444);">STOP</button><br>
+  <button class="adv-button" onclick="alert('Advanced Mode Coming Soon')">Advanced Mode</button>
+  <div class="gain-slider">
+    <label for="gainRange">Gain Boost: <span id="gainValue">1x</span></label><br>
+    <input type="range" id="gainRange" min="1" max="500" value="1">
+  </div>
+  <div class="instructions">
+    <h3>How to Use with Discord</h3>
+    <ul>
+      <li>Open Discord on your device</li>
+      <li>Go to Voice & Video settings</li>
+      <li>Set input device to "Default"</li>
+      <li>Click the "ATRONE'S LOUDMIC" button above</li>
+      <li>Allow mic access when asked</li>
+      <li>Go back to Discord and start talking</li>
+      <li>Your voice will be boosted in VC</li>
+    </ul>
+  </div>
+  <div class="tips">
+    <h3>Discord Tips:</h3>
+    <ul>
+      <li>Keep this page open in background while using Discord</li>
+      <li>Disable Discord's noise suppression</li>
+      <li>Turn off automatic input sensitivity in Discord</li>
+      <li>Use headphones to avoid feedback loops</li>
+    </ul>
+  </div>
+  <script>
+    let gainNode; let streamRef = null;
+    function startLoudMic() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          streamRef = stream;
+          document.getElementById("micStatus").textContent = "🎤 Microphone Active";
+          document.getElementById("startBtn").style.display = "none";
+          document.getElementById("stopBtn").style.display = "inline-block";
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioCtx.createMediaStreamSource(stream);
+          gainNode = audioCtx.createGain();
+          source.connect(gainNode).connect(audioCtx.destination);
+          document.getElementById("gainRange").addEventListener("input", (e) => {
+            const boost = e.target.value;
+            gainNode.gain.value = boost;
+            document.getElementById("gainValue").innerText = boost + "x";
+          });
+        })
+        .catch(err => {
+          document.getElementById("micStatus").textContent = "❌ Microphone Access Denied";
+          alert("Mic access denied or error: " + err);
+        });
+    }
+    function stopLoudMic() {
+      if (streamRef) {
+        const tracks = streamRef.getTracks();
+        tracks.forEach(track => track.stop());
+        document.getElementById("micStatus").textContent = "🎤 Microphone Inactive";
+        document.getElementById("startBtn").style.display = "inline-block";
+        document.getElementById("stopBtn").style.display = "none";
+      }
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(() => console.log("Service Worker Registered"));
+    }
+  </script>
+</body>
+</html>
